@@ -1,0 +1,36 @@
+#' boundedur: Unit Root Tests for Bounded Time Series
+#'
+#' The \pkg{boundedur} package implements unit root tests for bounded time
+#' series following the methodology of Cavaliere and Xu (2014). Standard unit
+#' root tests (ADF, Phillips-Perron) have non-standard limiting distributions
+#' when the time series is constrained to lie within bounds. This package
+#' provides modified tests with p-values computed via Monte Carlo simulation
+#' of bounded Brownian motion.
+#'
+#' @section Main Functions:
+#' \describe{
+#'   \item{\code{\link{boundedur}}}{Main function to perform bounded unit root tests}
+#'   \item{\code{\link{simulate_bounded_bm}}}{Simulate bounded Brownian motion}
+#'   \item{\code{\link{select_lag_maic}}}{Select optimal lag using MAIC criterion}
+#' }
+#'
+#' @section Available Tests:
+#' \itemize{
+#'   \item \strong{ADF-alpha}: Augmented Dickey-Fuller normalized bias test
+#'   \item \strong{ADF-t}: Augmented Dickey-Fuller t-statistic test
+#'   \item \strong{MZ-alpha}: Modified Phillips-Perron normalized bias test
+#'   \item \strong{MZ-t}: Modified Phillips-Perron t-statistic test
+#'   \item \strong{MSB}: Modified Sargan-Bhargava test
+#' }
+#'
+#' @references
+#' Cavaliere, G., & Xu, F. (2014). Testing for unit roots in bounded time
+#' series. \emph{Journal of Econometrics}, 178(2), 259-272.
+#' \doi{10.1016/j.jeconom.2013.08.012}
+#'
+#' Ng, S., & Perron, P. (2001). Lag length selection and the construction of
+#' unit root tests with good size and power. \emph{Econometrica}, 69(6),
+#' 1519-1554. \doi{10.1111/1468-0262.00256}
+#'
+#' @keywords internal
+"_PACKAGE"
