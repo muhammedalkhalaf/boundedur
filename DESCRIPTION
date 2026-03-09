@@ -24,6 +24,8 @@ Description: Implements unit root tests for bounded time series following
     using the MAIC criterion of Ng and Perron (2001) 
     <doi:10.1111/1468-0262.00256>.
 License: GPL-3
+URL: https://github.com/muhammedalkhalaf/boundedur
+BugReports: https://github.com/muhammedalkhalaf/boundedur/issues
 Encoding: UTF-8
 Depends: R (>= 3.5.0)
 Imports:
