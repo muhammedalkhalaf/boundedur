@@ -1,7 +1,6 @@
 # boundedur
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/merwanroudane/boundedur/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/merwanroudane/boundedur/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/boundedur)](https://CRAN.R-project.org/package=boundedur)
 <!-- badges: end -->
 
@@ -27,7 +26,6 @@ install.packages("boundedur")
 
 # Development version from GitHub
 # install.packages("remotes")
-remotes::install_github("merwanroudane/boundedur")
 ```
 
 ## Usage

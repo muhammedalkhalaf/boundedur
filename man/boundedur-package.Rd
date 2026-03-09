@@ -42,7 +42,7 @@ unit root tests with good size and power. \emph{Econometrica}, 69(6),
 1519-1554. \doi{10.1111/1468-0262.00256}
 }
 \author{
-\strong{Maintainer}: Merwan Roudane \email{merwanroudane920@gmail.com}
+\strong{Maintainer}:  
 
 Other contributors:
 \itemize{
