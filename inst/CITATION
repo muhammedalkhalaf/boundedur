@@ -1,4 +1,4 @@
-﻿citHeader("To cite boundedur in publications use:")
+citHeader("To cite boundedur in publications use:")
 
 bibentry(
   bibtype  = "Manual",
