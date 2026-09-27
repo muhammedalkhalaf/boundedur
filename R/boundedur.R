@@ -76,7 +76,7 @@
 #' @references
 #' Cavaliere, G., & Xu, F. (2014). Testing for unit roots in bounded time
 #' series. \emph{Journal of Econometrics}, 178(2), 259-272.
-#' \doi{10.1016/j.jeconom.2013.08.012}
+#' \doi{10.1016/j.jeconom.2013.08.026}
 #'
 #' Ng, S., & Perron, P. (2001). Lag length selection and the construction of
 #' unit root tests with good size and power. \emph{Econometrica}, 69(6),

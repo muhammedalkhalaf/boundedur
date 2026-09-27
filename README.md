@@ -98,7 +98,7 @@ P-values are computed via Monte Carlo simulation of the bounded Brownian motion 
 
 ## References
 
-Cavaliere, G., & Xu, F. (2014). Testing for unit roots in bounded time series. *Journal of Econometrics*, 178(2), 259-272. [doi:10.1016/j.jeconom.2013.08.012](https://doi.org/10.1016/j.jeconom.2013.08.012)
+Cavaliere, G., & Xu, F. (2014). Testing for unit roots in bounded time series. *Journal of Econometrics*, 178(2), 259-272. [doi:10.1016/j.jeconom.2013.08.026](https://doi.org/10.1016/j.jeconom.2013.08.026)
 
 Ng, S., & Perron, P. (2001). Lag length selection and the construction of unit root tests with good size and power. *Econometrica*, 69(6), 1519-1554. [doi:10.1111/1468-0262.00256](https://doi.org/10.1111/1468-0262.00256)
 

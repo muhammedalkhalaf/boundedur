@@ -12,7 +12,7 @@ Authors@R: c(
     person("Fang", "Xu", role = "ctb",
            comment = "Original methodology"))
 Description: Implements unit root tests for bounded time series following
-    Cavaliere and Xu (2014) <doi:10.1016/j.jeconom.2013.08.012>. Standard 
+    Cavaliere and Xu (2014) <doi:10.1016/j.jeconom.2013.08.026>. Standard 
     unit root tests (ADF, Phillips-Perron) have non-standard limiting 
     distributions when the time series is bounded. This package provides 
     modified ADF and M-type tests (MZ-alpha, MZ-t, MSB) with p-values computed 

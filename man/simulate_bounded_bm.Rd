@@ -48,5 +48,5 @@ bm_lower <- simulate_bounded_bm(n = 1000, c_lower = -1, c_upper = Inf)
 \references{
 Cavaliere, G., & Xu, F. (2014). Testing for unit roots in bounded time
 series. \emph{Journal of Econometrics}, 178(2), 259-272.
-\doi{10.1016/j.jeconom.2013.08.012}
+\doi{10.1016/j.jeconom.2013.08.026}
 }

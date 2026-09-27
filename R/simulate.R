@@ -27,7 +27,7 @@
 #' @references
 #' Cavaliere, G., & Xu, F. (2014). Testing for unit roots in bounded time
 #' series. \emph{Journal of Econometrics}, 178(2), 259-272.
-#' \doi{10.1016/j.jeconom.2013.08.012}
+#' \doi{10.1016/j.jeconom.2013.08.026}
 #'
 #' @examples
 #' # Simulate bounded Brownian motion with two-sided bounds
