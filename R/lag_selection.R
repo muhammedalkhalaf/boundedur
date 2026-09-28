@@ -1,28 +1,28 @@
 #' Select Optimal Lag using MAIC Criterion
 #'
-#' Selects the optimal number of lags for the ADF regression using the
+#' Selects the number of lagged differences in the ADF regression with the
 #' Modified Akaike Information Criterion (MAIC) of Ng and Perron (2001).
 #'
 #' @param y Numeric vector. Time series data.
 #' @param maxlag Integer or \code{NULL}. Maximum lag to consider. If
 #'   \code{NULL}, uses the rule \code{floor(12 * (T/100)^0.25)}.
-#' @param detrend Character. Detrending method: "constant" (demean) or
-#'   "none". Default is "constant".
+#' @param detrend Character. De-meaning method: "constant" (OLS de-meaning)
+#'   or "none". Default is "constant".
 #'
 #' @return A list with class \code{"lag_selection"} containing:
 #'   \item{selected_lag}{Optimal lag selected by MAIC}
 #'   \item{maic}{MAIC value at optimal lag}
 #'   \item{all_maic}{Vector of MAIC values for all lags}
 #'   \item{maxlag}{Maximum lag considered}
+#'   \item{n}{Sample size}
 #'
 #' @details
-#' The MAIC criterion is defined as:
-#' \deqn{MAIC(k) = \ln(\hat{\sigma}^2_k) + 2(k+1)/T}
-#' where \eqn{\hat{\sigma}^2_k} is the residual variance from the ADF
-#' regression with \eqn{k} lags.
-#'
-#' This criterion provides better size properties than standard AIC for
-#' unit root testing.
+#' For \eqn{k = 0, \ldots, k_{max}}, the ADF regression of
+#' \eqn{\Delta \hat X_t} on \eqn{\hat X_{t-1}} and \eqn{k} lagged differences
+#' is estimated on the common sample \eqn{t = k_{max} + 2, \ldots, T}, and
+#' \deqn{MAIC(k) = \ln(\hat{\sigma}^2_k) + 2(\tau_T(k) + k)/(T - k_{max} - 1),}
+#' with \eqn{\tau_T(k) = \hat\sigma_k^{-2} \hat\beta_0^2 \sum \hat X_{t-1}^2}
+#' and \eqn{\hat\beta_0} the coefficient on \eqn{\hat X_{t-1}}.
 #'
 #' @references
 #' Ng, S., & Perron, P. (2001). Lag length selection and the construction of
@@ -40,78 +40,47 @@
 #'
 #' @export
 select_lag_maic <- function(y, maxlag = NULL, detrend = "constant") {
-  # Validate inputs
   if (!is.numeric(y) || !is.vector(y)) {
     stop("'y' must be a numeric vector")
   }
-  
   n <- length(y)
   if (n < 10) {
     stop("Insufficient observations (minimum 10 required)")
   }
-  
   detrend <- match.arg(detrend, c("constant", "none"))
-  
-  # Default maxlag (Ng & Perron 2001)
   if (is.null(maxlag)) {
     maxlag <- floor(12 * (n / 100)^0.25)
   }
-  maxlag <- min(maxlag, floor(n / 3))  # Safety limit
-  
-  # First difference
-  dy <- diff(y)
-  
-  # Storage for MAIC values
-  maic_values <- numeric(maxlag + 1)
-  
-  for (k in 0:maxlag) {
-    if (k > 0) {
-      # Embed lagged differences
-      dy_embed <- stats::embed(dy, k + 1)
-      dy_dep <- dy_embed[, 1]
-      dy_lags <- dy_embed[, -1, drop = FALSE]
-      y_lag1 <- y[(k + 1):(n - 1)]
-      
-      if (detrend == "constant") {
-        X <- cbind(1, y_lag1, dy_lags)
-      } else {
-        X <- cbind(y_lag1, dy_lags)
-      }
-    } else {
-      dy_dep <- dy
-      y_lag1 <- y[-n]
-      
-      if (detrend == "constant") {
-        X <- cbind(1, y_lag1)
-      } else {
-        X <- cbind(y_lag1)
-      }
-    }
-    
-    N_k <- length(dy_dep)
-    
-    # OLS
-    fit <- stats::lm.fit(X, dy_dep)
-    sigma2_k <- sum(fit$residuals^2) / N_k
-    
-    # MAIC criterion
-    tau_k <- 2 * (k + 1) / N_k
-    maic_values[k + 1] <- log(sigma2_k) + tau_k
+  maxlag <- max(0L, min(as.integer(maxlag), n - 6L))
+
+  d <- .bur_detrend(y, detrend)
+  tt <- (maxlag + 2L):n
+  nef <- length(tt)
+  dep <- d[tt] - d[tt - 1L]
+  R <- matrix(d[tt - 1L], ncol = 1L)
+  if (maxlag > 0L) {
+    for (i in seq_len(maxlag)) R <- cbind(R, d[tt - i] - d[tt - i - 1L])
   }
-  
-  # Select minimum
-  best_lag <- which.min(maic_values) - 1
-  
+  sumy <- sum(R[, 1]^2)
+  maic_values <- numeric(maxlag + 1L)
+  for (k in 0:maxlag) {
+    Xk <- R[, seq_len(k + 1L), drop = FALSE]
+    fit <- stats::lm.fit(Xk, dep)
+    s2 <- sum(fit$residuals^2) / nef
+    tau_k <- fit$coefficients[1]^2 * sumy / s2
+    maic_values[k + 1L] <- log(s2) + 2 * (k + tau_k) / nef
+  }
+  best_lag <- which.min(maic_values) - 1L
+
   result <- list(
     selected_lag = best_lag,
-    maic = maic_values[best_lag + 1],
+    maic = maic_values[best_lag + 1L],
     all_maic = maic_values,
     maxlag = maxlag,
     n = n
   )
-  
   class(result) <- "lag_selection"
-  return(result)
+  result
 }
 
 #' @export

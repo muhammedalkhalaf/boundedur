@@ -1,7 +1,7 @@
 #' Simulate Bounded Brownian Motion
 #'
-#' Simulates a discretized reflected Brownian motion constrained between
-#' bounds, following the methodology of Cavaliere and Xu (2014).
+#' Simulates the discretized regulated Brownian motion of Algorithm 1 in
+#' Cavaliere and Xu (2014).
 #'
 #' @param n Integer. Number of time steps for discretization.
 #' @param c_lower Numeric. Standardized lower bound parameter.
@@ -12,11 +12,10 @@
 #'   bounded Brownian motion path, starting at 0.
 #'
 #' @details
-#' The function simulates a standard Brownian motion and applies reflection
-
-#' at the boundaries. For two-sided bounds, both upper and lower reflections
-#' are applied. For one-sided bounds (\code{c_upper = Inf}), only lower
-#' reflection is used.
+#' The path follows the recursion (4.11) of Cavaliere and Xu (2014):
+#' \eqn{X_t = X_{t-1} + n^{-1/2}\varepsilon_t}, set to the bound whenever it
+#' would cross it, with \eqn{X_0 = 0} and i.i.d. standard normal
+#' \eqn{\varepsilon_t}.
 #'
 #' The standardized bound parameters \code{c_lower} and \code{c_upper} are
 #' computed from the original bounds as:
@@ -41,7 +40,6 @@
 #'
 #' @export
 simulate_bounded_bm <- function(n, c_lower, c_upper = Inf) {
-  # Validate inputs
   if (!is.numeric(n) || length(n) != 1 || n < 1 || n != floor(n)) {
     stop("'n' must be a positive integer")
   }
@@ -54,118 +52,41 @@ simulate_bounded_bm <- function(n, c_lower, c_upper = Inf) {
   if (is.finite(c_upper) && c_lower >= c_upper) {
     stop("'c_lower' must be less than 'c_upper'")
   }
-  
-  # Generate standard Brownian motion increments
-  dW <- stats::rnorm(n, mean = 0, sd = 1 / sqrt(n))
-  
-  # Initialize path
-  W <- numeric(n + 1)
-  W[1] <- 0
-  
-  # Simulate with reflection at boundaries
-  for (i in seq_len(n)) {
-    W[i + 1] <- W[i] + dW[i]
-    
-    # Apply reflection (Skorokhod reflection)
-    if (is.finite(c_upper)) {
-      # Two-sided reflection
-      while (W[i + 1] < c_lower || W[i + 1] > c_upper) {
-        if (W[i + 1] < c_lower) {
-          W[i + 1] <- 2 * c_lower - W[i + 1]
-        }
-        if (W[i + 1] > c_upper) {
-          W[i + 1] <- 2 * c_upper - W[i + 1]
-        }
-      }
-    } else {
-      # One-sided reflection (lower bound only)
-      while (W[i + 1] < c_lower) {
-        W[i + 1] <- 2 * c_lower - W[i + 1]
-      }
-    }
-  }
-  
-  return(W)
+  .bur_path(stats::rnorm(n), c_lower, c_upper)
 }
 
-#' Compute Functionals of Bounded Brownian Motion
-#'
-#' Internal function to compute test statistics from simulated bounded
-#' Brownian motion paths.
-#'
-#' @param W Numeric vector. Simulated bounded Brownian motion path.
-#' @param test Character. Type of test statistic: "adf_alpha", "adf_t",
-#'   "mz_alpha", "mz_t", or "msb".
-#'
-#' @return Numeric value of the test statistic functional.
-#'
+
+#' Regulated random walk (internal)
 #' @keywords internal
 #' @noRd
-compute_bm_functional <- function(W, test) {
-  n <- length(W) - 1
-  dt <- 1 / n
-  
-  # Grid points for integration
-  t_grid <- seq(0, 1, length.out = n + 1)
-  
-  # W(1) - final value
-  W1 <- W[n + 1]
-  
-  # Integral of W^2 dt (using trapezoidal rule)
-  int_W2 <- sum((W[-1]^2 + W[-(n + 1)]^2) / 2 * dt)
-  
-  # Integral of W dW (Ito integral approximation)
-  int_WdW <- sum(W[-(n + 1)] * diff(W))
-  
-  # Test statistics based on bounded Brownian motion functionals
-  # Following Cavaliere & Xu (2014) Equations 2.6-2.10
-  switch(test,
-    "adf_alpha" = {
-      # ADF normalized bias: T(rho - 1) -> int W dW / int W^2 dt
-      int_WdW / int_W2
-    },
-    "adf_t" = {
-      # ADF t-statistic
-      int_WdW / sqrt(int_W2)
-    },
-    "mz_alpha" = {
-      # MZ_alpha: (W(1)^2 - 1) / (2 * int W^2 dt)
-      (W1^2 - 1) / (2 * int_W2)
-    },
-    "mz_t" = {
-      # MZ_t: (W(1)^2 - 1) / (2 * sqrt(int W^2 dt))
-      (W1^2 - 1) / (2 * sqrt(int_W2))
-    },
-    "msb" = {
-      # MSB: sqrt(int W^2 dt)
-      sqrt(int_W2)
-    },
-    stop("Unknown test type: ", test)
-  )
+.bur_path <- function(eps, c_lower, c_upper) {
+  n <- length(eps)
+  sq <- sqrt(n)
+  X <- numeric(n + 1L)
+  for (t in seq_len(n)) {
+    x <- X[t] + eps[t] / sq
+    if (x > c_upper) x <- c_upper
+    if (x < c_lower) x <- c_lower
+    X[t + 1L] <- x
+  }
+  X
 }
 
-#' Simulate Critical Values Distribution
+
+#' Monte Carlo Null Distribution (Algorithm 1, steps i to iii)
 #'
-#' Internal function to generate the null distribution of test statistics
-#' via Monte Carlo simulation of bounded Brownian motion.
-#'
-#' @param c_lower Numeric. Standardized lower bound.
-#' @param c_upper Numeric or Inf. Standardized upper bound.
-#' @param test Character. Test type.
-#' @param nsim Integer. Number of Monte Carlo replications.
-#' @param nstep Integer. Number of discretization steps.
-#'
-#' @return Numeric vector of simulated test statistics under the null.
-#'
+#' @return Matrix with columns \code{alpha} (limit of ADF-alpha and
+#'   MZ-alpha), \code{t} (limit of ADF-t and MZ-t) and \code{msb}.
 #' @keywords internal
 #' @noRd
-simulate_null_distribution <- function(c_lower, c_upper, test, nsim, nstep) {
-  stats <- numeric(nsim)
-  
-  for (i in seq_len(nsim)) {
-    W <- simulate_bounded_bm(nstep, c_lower, c_upper)
-    stats[i] <- compute_bm_functional(W, test)
+simulate_null_distribution <- function(c_lower, c_upper, nsim, nstep) {
+  S <- matrix(NA_real_, nsim, 3L, dimnames = list(NULL, c("alpha", "t", "msb")))
+  for (b in seq_len(nsim)) {
+    X <- .bur_path(stats::rnorm(nstep), c_lower, c_upper)
+    Xt <- X - mean(X)
+    A <- mean(Xt[-1L]^2)
+    La <- (Xt[nstep + 1L]^2 - Xt[1L]^2 - 1) / (2 * A)
+    S[b, ] <- c(La, La * sqrt(A), sqrt(A))
   }
-  
-  return(stats)
+  S
 }

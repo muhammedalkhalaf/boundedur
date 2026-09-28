@@ -12,8 +12,8 @@ select_lag_maic(y, maxlag = NULL, detrend = "constant")
 \item{maxlag}{Integer or \code{NULL}. Maximum lag to consider. If
 \code{NULL}, uses the rule \code{floor(12 * (T/100)^0.25)}.}
 
-\item{detrend}{Character. Detrending method: "constant" (demean) or
-"none". Default is "constant".}
+\item{detrend}{Character. De-meaning method: "constant" (OLS de-meaning)
+or "none". Default is "constant".}
 }
 \value{
 A list with class \code{"lag_selection"} containing:
@@ -21,19 +21,19 @@ A list with class \code{"lag_selection"} containing:
   \item{maic}{MAIC value at optimal lag}
   \item{all_maic}{Vector of MAIC values for all lags}
   \item{maxlag}{Maximum lag considered}
+  \item{n}{Sample size}
 }
 \description{
-Selects the optimal number of lags for the ADF regression using the
+Selects the number of lagged differences in the ADF regression with the
 Modified Akaike Information Criterion (MAIC) of Ng and Perron (2001).
 }
 \details{
-The MAIC criterion is defined as:
-\deqn{MAIC(k) = \ln(\hat{\sigma}^2_k) + 2(k+1)/T}
-where \eqn{\hat{\sigma}^2_k} is the residual variance from the ADF
-regression with \eqn{k} lags.
-
-This criterion provides better size properties than standard AIC for
-unit root testing.
+For \eqn{k = 0, \ldots, k_{max}}, the ADF regression of
+\eqn{\Delta \hat X_t} on \eqn{\hat X_{t-1}} and \eqn{k} lagged differences
+is estimated on the common sample \eqn{t = k_{max} + 2, \ldots, T}, and
+\deqn{MAIC(k) = \ln(\hat{\sigma}^2_k) + 2(\tau_T(k) + k)/(T - k_{max} - 1),}
+with \eqn{\tau_T(k) = \hat\sigma_k^{-2} \hat\beta_0^2 \sum \hat X_{t-1}^2}
+and \eqn{\hat\beta_0} the coefficient on \eqn{\hat X_{t-1}}.
 }
 \examples{
 # Generate random walk

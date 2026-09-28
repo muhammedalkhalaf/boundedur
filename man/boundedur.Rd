@@ -67,7 +67,11 @@ An object of class \code{"boundedur"} containing:
   \item{ubound}{Upper bound}
   \item{c_lower}{Standardized lower bound parameter}
   \item{c_upper}{Standardized upper bound parameter}
-  \item{sigma2_lr}{Long-run variance estimate}
+  \item{sigma2_lr}{Autoregressive spectral estimate \eqn{s^2_{AR}(k)}
+    of the long-run variance}
+  \item{alpha1}{\eqn{\hat\alpha(1)}, one minus the sum of the lag
+    coefficients}
+  \item{x0}{Initial observation \eqn{X_0} used in the bound parameters}
   \item{detrend}{Detrending method used}
   \item{nsim}{Number of Monte Carlo replications}
   \item{call}{The matched call}
@@ -91,18 +95,24 @@ the bounds. The alternative is stationarity.
 \section{Test Statistics}{
 
 \describe{
-  \item{ADF-alpha}{Augmented Dickey-Fuller normalized bias: \eqn{T(\hat{\rho} - 1)}}
-  \item{ADF-t}{Augmented Dickey-Fuller t-statistic for \eqn{\rho}}
-  \item{MZ-alpha}{Modified Phillips-Perron normalized bias}
-  \item{MZ-t}{Modified Phillips-Perron t-statistic}
-  \item{MSB}{Modified Sargan-Bhargava statistic}
+  \item{ADF-alpha}{\eqn{T(\hat{\rho} - 1)/\hat\alpha(1)} from the ADF
+    regression of the de-meaned series (no deterministic terms)}
+  \item{ADF-t}{The t-statistic for \eqn{\rho - 1 = 0} in that regression}
+  \item{MZ-alpha}{\eqn{(T^{-1}\hat X_T^2 - T^{-1}\hat X_0^2 - s^2_{AR}) /
+    (2T^{-2}\sum \hat X_{t-1}^2)}}
+  \item{MZ-t}{\eqn{MZ_\alpha \times MSB}}
+  \item{MSB}{\eqn{(T^{-2}\sum \hat X_{t-1}^2 / s^2_{AR})^{1/2}}}
 }
+All five reject for small values; ADF-alpha and MZ-alpha, and ADF-t and
+MZ-t, share the same limiting distribution (Theorem 1).
 }
 
 \section{P-value Computation}{
 
-P-values are computed by Monte Carlo simulation of bounded Brownian
-motion. The number of replications (\code{nsim}) controls accuracy;
+P-values follow Algorithm 1 of Cavaliere and Xu (2014): the bound
+parameters are estimated by \eqn{\hat c = (b - X_0)/(s_{AR} T^{1/2})},
+and the null distribution is simulated from a random walk regulated at
+\eqn{\hat c} and \eqn{\bar c}. The number of replications (\code{nsim}) controls accuracy;
 larger values give more precise p-values but increase computation time.
 }
 

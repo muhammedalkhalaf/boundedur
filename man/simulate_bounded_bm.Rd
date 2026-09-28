@@ -19,14 +19,14 @@ A numeric vector of length \code{n + 1} containing the simulated
   bounded Brownian motion path, starting at 0.
 }
 \description{
-Simulates a discretized reflected Brownian motion constrained between
-bounds, following the methodology of Cavaliere and Xu (2014).
+Simulates the discretized regulated Brownian motion of Algorithm 1 in
+Cavaliere and Xu (2014).
 }
 \details{
-The function simulates a standard Brownian motion and applies reflection
-at the boundaries. For two-sided bounds, both upper and lower reflections
-are applied. For one-sided bounds (\code{c_upper = Inf}), only lower
-reflection is used.
+The path follows the recursion (4.11) of Cavaliere and Xu (2014):
+\eqn{X_t = X_{t-1} + n^{-1/2}\varepsilon_t}, set to the bound whenever it
+would cross it, with \eqn{X_0 = 0} and i.i.d. standard normal
+\eqn{\varepsilon_t}.
 
 The standardized bound parameters \code{c_lower} and \code{c_upper} are
 computed from the original bounds as:

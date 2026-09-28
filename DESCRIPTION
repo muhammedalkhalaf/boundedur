@@ -1,7 +1,7 @@
 Package: boundedur
 Type: Package
 Title: Unit Root Tests for Bounded Time Series
-Version: 1.0.2
+Version: 1.0.3
 Authors@R: c(
     person("Muhammad", "Alkhalaf", 
            email = "muhammedalkhalaf@gmail.com",
@@ -29,5 +29,5 @@ Imports:
     stats
 Suggests:
     testthat (>= 3.0.0)
-RoxygenNote: 7.3.3
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0

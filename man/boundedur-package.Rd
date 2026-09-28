@@ -41,8 +41,21 @@ Ng, S., & Perron, P. (2001). Lag length selection and the construction of
 unit root tests with good size and power. \emph{Econometrica}, 69(6),
 1519-1554. \doi{10.1111/1468-0262.00256}
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/muhammedalkhalaf/boundedur}
+  \item Report bugs at \url{https://github.com/muhammedalkhalaf/boundedur/issues}
+}
+
+}
 \author{
-\strong{Maintainer}:  
+\strong{Maintainer}: Muhammad Alkhalaf \email{muhammedalkhalaf@gmail.com} (\href{https://orcid.org/0009-0002-2677-9246}{ORCID}) [copyright holder]
+
+Authors:
+\itemize{
+  \item Muhammad Alkhalaf \email{muhammedalkhalaf@gmail.com} (\href{https://orcid.org/0009-0002-2677-9246}{ORCID}) [copyright holder]
+}
 
 Other contributors:
 \itemize{

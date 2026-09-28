@@ -126,3 +126,22 @@ test_that("print and summary methods work", {
   expect_output(print(result), "Bounded Unit Root Tests")
   expect_output(summary(result), "Summary:")
 })
+
+test_that("bound parameters use the initial value (Cavaliere and Xu 2014, eq. 4.10)", {
+  set.seed(5)
+  y <- numeric(120); y[1] <- 2
+  for (i in 2:120) y[i] <- min(max(y[i - 1] + rnorm(1, 0, 0.3), 0), 10)
+  r <- boundedur(y, lbound = 0, ubound = 10, nsim = 49, seed = 1)
+  s <- sqrt(r$sigma2_lr * r$n)
+  expect_equal(r$c_lower, (0 - y[1]) / s)
+  expect_equal(r$c_upper, (10 - y[1]) / s)
+  expect_equal(unname(r$statistics["mz_t"]),
+               unname(r$statistics["mz_alpha"] * r$statistics["msb"]))
+})
+
+test_that("a stationary bounded series is rejected, including by MSB", {
+  set.seed(9)
+  z <- 5 + as.numeric(arima.sim(list(ar = 0.3), 300)) * 0.5
+  r <- boundedur(z, lbound = 0, ubound = 10, nsim = 199, seed = 2)
+  expect_true(all(r$p_values < 0.05))
+})

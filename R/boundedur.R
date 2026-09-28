@@ -44,7 +44,11 @@
 #'   \item{ubound}{Upper bound}
 #'   \item{c_lower}{Standardized lower bound parameter}
 #'   \item{c_upper}{Standardized upper bound parameter}
-#'   \item{sigma2_lr}{Long-run variance estimate}
+#'   \item{sigma2_lr}{Autoregressive spectral estimate \eqn{s^2_{AR}(k)}
+#'     of the long-run variance}
+#'   \item{alpha1}{\eqn{\hat\alpha(1)}, one minus the sum of the lag
+#'     coefficients}
+#'   \item{x0}{Initial observation \eqn{X_0} used in the bound parameters}
 #'   \item{detrend}{Detrending method used}
 #'   \item{nsim}{Number of Monte Carlo replications}
 #'   \item{call}{The matched call}
@@ -61,16 +65,22 @@
 #'
 #' @section Test Statistics:
 #' \describe{
-#'   \item{ADF-alpha}{Augmented Dickey-Fuller normalized bias: \eqn{T(\hat{\rho} - 1)}}
-#'   \item{ADF-t}{Augmented Dickey-Fuller t-statistic for \eqn{\rho}}
-#'   \item{MZ-alpha}{Modified Phillips-Perron normalized bias}
-#'   \item{MZ-t}{Modified Phillips-Perron t-statistic}
-#'   \item{MSB}{Modified Sargan-Bhargava statistic}
+#'   \item{ADF-alpha}{\eqn{T(\hat{\rho} - 1)/\hat\alpha(1)} from the ADF
+#'     regression of the de-meaned series (no deterministic terms)}
+#'   \item{ADF-t}{The t-statistic for \eqn{\rho - 1 = 0} in that regression}
+#'   \item{MZ-alpha}{\eqn{(T^{-1}\hat X_T^2 - T^{-1}\hat X_0^2 - s^2_{AR}) /
+#'     (2T^{-2}\sum \hat X_{t-1}^2)}}
+#'   \item{MZ-t}{\eqn{MZ_\alpha \times MSB}}
+#'   \item{MSB}{\eqn{(T^{-2}\sum \hat X_{t-1}^2 / s^2_{AR})^{1/2}}}
 #' }
+#' All five reject for small values; ADF-alpha and MZ-alpha, and ADF-t and
+#' MZ-t, share the same limiting distribution (Theorem 1).
 #'
 #' @section P-value Computation:
-#' P-values are computed by Monte Carlo simulation of bounded Brownian
-#' motion. The number of replications (\code{nsim}) controls accuracy;
+#' P-values follow Algorithm 1 of Cavaliere and Xu (2014): the bound
+#' parameters are estimated by \eqn{\hat c = (b - X_0)/(s_{AR} T^{1/2})},
+#' and the null distribution is simulated from a random walk regulated at
+#' \eqn{\hat c} and \eqn{\bar c}. The number of replications (\code{nsim}) controls accuracy;
 #' larger values give more precise p-values but increase computation time.
 #'
 #' @references
@@ -162,97 +172,55 @@ boundedur <- function(y, lbound, ubound = Inf,
   run_mz_t <- test %in% c("all", "mz_t")
   run_msb <- test %in% c("all", "msb")
   
+  # De-mean (OLS) as in Cavaliere and Xu (2014, Section 3)
+  d <- .bur_detrend(y, detrend)
+
   # Lag selection
   if (is.null(lags)) {
     lag_result <- select_lag_maic(y, maxlag = maxlag, detrend = detrend)
     lags <- lag_result$selected_lag
   }
-  
+  lags <- as.integer(min(max(lags, 0L), n - 4L))
+
   # Set nstep default
   if (is.null(nstep)) {
     nstep <- n
   }
-  
-  # Estimate long-run variance
-  lrvar_result <- estimate_lrvar(y, lags = lags, detrend = detrend)
-  sigma2_lr <- lrvar_result$sigma2_lr
-  
-  # Compute standardized bound parameters (Equation 4.10)
-  X0 <- mean(y)  # Initial value approximation
+
+  # ADF regression and AR spectral long-run variance s^2_AR(k), eq. (3.8)
+  adf_result <- compute_adf_stats(d, lags)
+  sigma2_lr <- adf_result$sigma2_lr
   sigma_lr <- sqrt(sigma2_lr)
-  
+
+  # Standardized bound parameters, eq. (4.10): the initial value X_0 is
+  # used; replacing it by the sample mean makes the estimators inconsistent
+  # (Cavaliere and Xu, 2014, Remark 4.1).
+  X0 <- y[1]
   c_lower <- (lbound - X0) / (sigma_lr * sqrt(n))
-  if (is.finite(ubound)) {
-    c_upper <- (ubound - X0) / (sigma_lr * sqrt(n))
-  } else {
-    c_upper <- Inf
-  }
-  
-  # Storage for results
-  statistics <- numeric()
-  p_values <- numeric()
-  
-  # Compute ADF statistics from data
-  if (run_adf_alpha || run_adf_t) {
-    adf_result <- compute_adf_stats(y, lags = lags, detrend = detrend)
-  }
-  
-  # Compute M statistics from data
-  if (run_mz_alpha || run_mz_t || run_msb) {
-    m_result <- compute_m_stats(y, sigma2_lr = sigma2_lr, detrend = detrend)
-  }
-  
-  # ADF-alpha test
-  if (run_adf_alpha) {
-    stat <- unname(adf_result$adf_alpha)
-    null_dist <- simulate_null_distribution(c_lower, c_upper, "adf_alpha",
-                                            nsim, nstep)
-    pval <- mean(null_dist <= stat)
-    statistics <- c(statistics, adf_alpha = stat)
-    p_values <- c(p_values, adf_alpha = pval)
-  }
-  
-  # ADF-t test
-  if (run_adf_t) {
-    stat <- unname(adf_result$adf_t)
-    null_dist <- simulate_null_distribution(c_lower, c_upper, "adf_t",
-                                            nsim, nstep)
-    pval <- mean(null_dist <= stat)
-    statistics <- c(statistics, adf_t = stat)
-    p_values <- c(p_values, adf_t = pval)
-  }
-  
-  # MZ-alpha test
-  if (run_mz_alpha) {
-    stat <- unname(m_result$mz_alpha)
-    null_dist <- simulate_null_distribution(c_lower, c_upper, "mz_alpha",
-                                            nsim, nstep)
-    pval <- mean(null_dist <= stat)
-    statistics <- c(statistics, mz_alpha = stat)
-    p_values <- c(p_values, mz_alpha = pval)
-  }
-  
-  # MZ-t test
-  if (run_mz_t) {
-    stat <- unname(m_result$mz_t)
-    null_dist <- simulate_null_distribution(c_lower, c_upper, "mz_t",
-                                            nsim, nstep)
-    pval <- mean(null_dist <= stat)
-    statistics <- c(statistics, mz_t = stat)
-    p_values <- c(p_values, mz_t = pval)
-  }
-  
-  # MSB test
-  if (run_msb) {
-    stat <- unname(m_result$msb)
-    null_dist <- simulate_null_distribution(c_lower, c_upper, "msb",
-                                            nsim, nstep)
-    # MSB is right-tailed (larger values indicate stationarity)
-    pval <- mean(null_dist >= stat)
-    statistics <- c(statistics, msb = stat)
-    p_values <- c(p_values, msb = pval)
-  }
-  
+  c_upper <- if (is.finite(ubound)) (ubound - X0) / (sigma_lr * sqrt(n)) else Inf
+
+  m_result <- compute_m_stats(d, sigma2_lr)
+
+  # Monte Carlo null distribution (Algorithm 1). ADF-alpha and MZ-alpha share
+  # one limit, ADF-t and MZ-t another; all reject for small values.
+  S <- simulate_null_distribution(c_lower, c_upper, nsim, nstep)
+
+  all_stats <- c(adf_alpha = unname(adf_result$adf_alpha),
+                 adf_t = unname(adf_result$adf_t),
+                 mz_alpha = m_result$mz_alpha,
+                 mz_t = m_result$mz_t,
+                 msb = m_result$msb)
+  sim_col <- c(adf_alpha = "alpha", adf_t = "t", mz_alpha = "alpha",
+               mz_t = "t", msb = "msb")
+  all_p <- vapply(names(all_stats), function(nm) {
+    mean(S[, sim_col[[nm]]] <= all_stats[[nm]])
+  }, numeric(1))
+
+  keep <- c(adf_alpha = run_adf_alpha, adf_t = run_adf_t,
+            mz_alpha = run_mz_alpha, mz_t = run_mz_t, msb = run_msb)
+  statistics <- all_stats[keep]
+  p_values <- all_p[keep]
+
   # Create results data frame
   results <- data.frame(
     statistic = statistics,
@@ -273,7 +241,8 @@ boundedur <- function(y, lbound, ubound = Inf,
     c_lower = c_lower,
     c_upper = c_upper,
     sigma2_lr = sigma2_lr,
-    alpha1 = lrvar_result$alpha1,
+    alpha1 = adf_result$alpha1,
+    x0 = X0,
     detrend = detrend,
     nsim = nsim,
     nstep = nstep,
