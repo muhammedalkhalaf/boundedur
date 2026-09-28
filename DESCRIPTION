@@ -1,7 +1,7 @@
 Package: boundedur
 Type: Package
 Title: Unit Root Tests for Bounded Time Series
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: c(
     person("Muhammad", "Alkhalaf", 
            email = "muhammedalkhalaf@gmail.com",

@@ -1,3 +1,7 @@
+# boundedur 1.0.2
+
+* Corrected the DOI of Cavaliere and Xu (2014) to 10.1016/j.jeconom.2013.08.026 in DESCRIPTION, README and all R and Rd files.
+
 # boundedur 1.0.0
 
 * Initial CRAN release.
